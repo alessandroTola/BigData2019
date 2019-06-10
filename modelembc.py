@@ -24,10 +24,15 @@ spark = SparkSession \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
-training_data = spark.read.parquet('hdfs:/bigdata/parquet/dataset100.parquet')
-test_data = spark.read.parquet('hdfs:/bigdata/parquet/testset10.parquet')
-#training_data = spark.read.parquet('parquet/datasetG.parquet')
-#test_data = spark.read.parquet('parquet/testsetG.parquet')
+path_trainingset = 'parquet/dataset100.parquet'
+path_testset = 'parquet/testset10.parquet'
+#Path per lettura da hdfs
+training_data = spark.read.parquet('hdfs:/bigdata/' + path_trainingset)
+test_data = spark.read.parquet('hdfs:/bigdata/' + path_trainingset)
+
+#path per la lettura da locale
+#training_data = spark.read.parquet('/homo/ubuntu/data' + path_trainingset)
+#test_data = spark.read.parquet('/homo/ubuntu/data' + path_trainingset)
 
 #Classificatore
 lr = LogisticRegression(regParam = 0.02, maxIter = 20)

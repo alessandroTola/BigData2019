@@ -21,12 +21,15 @@ import DBUtils
 def g(x):
     print x
 
-
+#Creazione del contex di spark
 sc = SparkContext()
 sqlContext = SQLContext(sc)
 spark = SparkSession.builder.master("local[8]").getOrCreate()
+
+#variabile grobale contentente gli embeddings per calcolati
 wordDict = spark.sparkContext.broadcast({row[0] : np.asarray(row[1:]) for _, row in pd.read_csv('sentic2vec.csv', skiprows=1, encoding='latin').iterrows()})
 
+#Funzione che richerca e calcola gli embaddings per ogni recensione
 def sum_vectors(words):
     features_accumulator = []
     for word in words:
@@ -57,16 +60,15 @@ swr = StopWordsRemover(inputCol = 'reviewTokensUf', outputCol = 'reviewTokens')
 reviews_swr = swr.transform(reviews_token).drop('reviewTokensUf')
 reviews_swr_test = swr.transform(reviews_token_test).drop('reviewTokensUf')
 
-#model = KeyedVectors.load_word2vec_format('GoogleNews-vectors-negative300.bin', binary=True)
-#model_vector_words = model.wv
-
 # Calculate the feature using word embedding pre calc, drop null record
-print (" sto iniziando la somma")
 sum_vectors_udf = udf(sum_vectors, VectorUDT())
+
+#Calcolo le features, creo il detaset pronto per l'addestramento
 vec_df = reviews_swr.withColumn('features', sum_vectors_udf('reviewTokens')).drop('reviewTokens').dropna(subset=['features'])
 vec_df_test = reviews_swr_test.withColumn('features', sum_vectors_udf('reviewTokens')).drop('reviewTokens').dropna(subset=['features'])
 
 print ('Fine creazione vettore: ', (time.time() - t0) / 60)
 
+#Salvo il dataset nel formato parquet, più veloce in lettura
 vec_df.write.mode('overwrite').parquet("parquet/datasetG.parquet")
 vec_df_test.write.mode('overwrite').parquet("parquet/testsetG.parquet")
