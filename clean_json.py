@@ -14,7 +14,7 @@ spark = SparkSession \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
-datapath = 'dataset10000.json'
+datapath = 'dataset.json'
 
 dataset = spark.read.format("json").option("inferSchema", "true").load(datapath)
 
@@ -49,12 +49,14 @@ dataset = dataset.sampleBy("label", fractions={1.0: ratio, 0.0: 1.0}, seed=42)
 dataset.groupBy("label").count().show()
 
 #Splitto il dataset in training_set e test_set tenendo 80% per training_set e 20% test_set
-[trainingData, testData] = dataset.randomSplit([0.8, 0.2], 42)
+[training_data, test_data] = dataset.randomSplit([0.8, 0.2], 42)
 
-print 'Dataset dimendion ' + str(trainingData.count())
-print 'Testset dimendion ' + str(testData.count())
+print 'Dataset dimendion ' + str(training_data.count())
+print 'Testset dimendion ' + str(test_data.count())
 dataset.show(10)
 
 #Salvo i nuovi json
-trainingData.write.mode('overwrite').json('training_setlll')
-testData.write.mode('overwrite').json('test_setlll')
+training_data.write.mode('overwrite').json('training_set_BIG')
+test_data.write.mode('overwrite').json('test_set_BIG')
+
+spark.stop()
