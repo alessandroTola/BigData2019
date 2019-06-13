@@ -14,6 +14,21 @@ spark = SparkSession \
     .config("spark.some.config.option", "some-value") \
     .getOrCreate()
 
+#variabile grobale contentente gli embeddings per calcolati
+wordDict = spark.sparkContext.broadcast({row[0] : np.asarray(row[1:]) for _, row in pd.read_csv('sentic2vec.csv', skiprows=1, encoding='latin').iterrows()})
+
+#Funzione che richerca e calcola gli embaddings per ogni recensione
+def sum_vectors(words):
+    features_accumulator = []
+    for word in words:
+        try:
+            features_accumulator.append(wordDict.value[word])
+        except:
+            pass
+    if(len(features_accumulator) == 0):
+        return None
+    return Vectors.dense(np.sum(features_accumulator, axis=0, dtype=np.float64))
+
 datapath = 'dataset.json'
 
 dataset = spark.read.format("json").option("inferSchema", "true").load(datapath)
@@ -55,8 +70,27 @@ print 'Dataset dimendion ' + str(training_data.count())
 print 'Testset dimendion ' + str(test_data.count())
 dataset.show(10)
 
-#Salvo i nuovi json
-training_data.write.mode('overwrite').json('training_set_BIG')
-test_data.write.mode('overwrite').json('test_set_BIG')
+#tokenize the text
+regexTokenizer = RegexTokenizer(gaps = False, pattern = '\w+', inputCol = 'reviewTS', outputCol = 'reviewTokensUf')
+reviews_token = regexTokenizer.transform(training_data).drop('reviewTS')
+reviews_token_test = regexTokenizer.transform(test_data).drop('reviewTS')
+
+# remove stopwords
+swr = StopWordsRemover(inputCol = 'reviewTokensUf', outputCol = 'reviewTokens')
+reviews_swr = swr.transform(reviews_token).drop('reviewTokensUf')
+reviews_swr_test = swr.transform(reviews_token_test).drop('reviewTokensUf')
+
+# Calculate the feature using word embedding pre calc, drop null record
+sum_vectors_udf = udf(sum_vectors, VectorUDT())
+
+#Calcolo le features, creo il detaset pronto per l'addestramento
+vec_df = reviews_swr.withColumn('features', sum_vectors_udf('reviewTokens')).drop('reviewTokens').dropna(subset=['features'])
+vec_df_test = reviews_swr_test.withColumn('features', sum_vectors_udf('reviewTokens')).drop('reviewTokens').dropna(subset=['features'])
+
+print ('Fine creazione vettore: ', (time.time() - t0) / 60)
+
+#Salvo il dataset nel formato parquet, più veloce in lettura
+vec_df.write.mode('overwrite').parquet("parquet/datasetG.parquet")
+vec_df_test.write.mode('overwrite').parquet("parquet/testsetG.parquet")
 
 spark.stop()
