@@ -9,7 +9,7 @@ I word embeddings che abbiamo utilizzato sono reperibili [a questo indirizzo](ht
 
 ## Preprocessing del dataset
 La creazione del dataset prevede le seguenti fasi:
-
+# Liste #
 -creazione di una colonna 'reviewTS' con la concatenazione del titolo della recensione e del suo contenuto.
 -eliminazione di tutte le colonne non utili come, 'reviewerID' o 'unixReviewTime'.
 -eliminazione delle recensioni con 3 stelle, per avere una suddivisione tra recensioni positive(4-5 stelle) e negative (1-2 stelle).
