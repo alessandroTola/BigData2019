@@ -11,25 +11,15 @@ I word embeddings che abbiamo utilizzato sono reperibili [a questo indirizzo](ht
 La creazione del dataset prevede le seguenti fasi:
 
 -creazione di una colonna 'reviewTS' con la concatenazione del titolo della recensione e del suo contenuto.
-
 -eliminazione di tutte le colonne non utili come, 'reviewerID' o 'unixReviewTime'.
-
 -eliminazione delle recensioni con 3 stelle, per avere una suddivisione tra recensioni positive(4-5 stelle) e negative (1-2 stelle).
-
 -inserimento della label per le istanze positive e negative.
-
 -eliminazione delle colonne non pi˘ utili, come stelle, testo della recensione e titolo.
-
 -suddivisione del dataset in due parti, il training set costituito dall'80% dei dati e il test set  costituito dal restante 20%.
-
 -suddivisione dell testo presente nella colonna 'reviewTS' in singole parole.
-
 -rimozione delle parole poco influenti come per esempio congiunzioni e articoli.
-
 -calcolo delle features a partire dalle parole separate e filtrate, ottenuto andando a cercare ogni parola tra i word embeddings.
-
 -precalcolo e somma dei valori tra loro per ogni parola della recensione.
-
 -eliminazione di tutte le colonne escluse quelle con 'label' e 'features'.
 
 
